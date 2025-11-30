@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Honor SMP IT Bustanul Maarif</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card { border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-radius: 15px; margin-bottom: 20px; transition: 0.3s; }
+        .card:hover { box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+        .hidden { display: none !important; }
+        
+        /* Sidebar */
+        .sidebar { min-height: 100vh; background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%); color: white; }
+        .nav-link { color: rgba(255,255,255,0.7); cursor: pointer; padding: 12px 20px; border-radius: 10px; margin-bottom: 8px; transition: 0.3s; font-weight: 500; }
+        .nav-link:hover, .nav-link.active { color: white; background: rgba(255,255,255,0.15); transform: translateX(5px); }
+        .nav-link i { width: 25px; text-align: center; }
+        
+        /* Dashboard Widgets */
+        .stat-card { color: white; border: none; overflow: hidden; position: relative; }
+        .stat-card .icon-bg { position: absolute; right: -10px; bottom: -10px; font-size: 5rem; opacity: 0.2; transform: rotate(-15deg); }
+        .bg-gradient-primary { background: linear-gradient(45deg, #4e73df, #224abe); }
+        .bg-gradient-success { background: linear-gradient(45deg, #1cc88a, #13855c); }
+        .bg-gradient-info { background: linear-gradient(45deg, #36b9cc, #258391); }
+        
+        /* Last Activity Widget */
+        .activity-card { border-left: 5px solid #4e73df; }
+        
+        /* Kalender */
+        .date-box { width: 100%; text-align: center; font-size: 11px; color: #666; }
+        .date-input { width: 100%; text-align: center; border: 1px solid #dee2e6; border-radius: 6px; font-weight: bold; padding: 5px 0; }
+        .date-input:focus { border-color: #4e73df; outline: none; box-shadow: 0 0 0 3px rgba(78,115,223,0.25); }
+        .filled-jp { background-color: #d1e7dd !important; border-color: #198754 !important; color: #0f5132; }
+        
+        /* Nota Preview */
+        #nota-preview-container { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .nota-box { width: 320px; background: white; padding: 25px; font-family: 'Courier New', Courier, monospace; font-size: 12px; box-shadow: 0 0 30px rgba(0,0,0,0.5); border-radius: 8px; }
+        #hidden-render-area { position: absolute; left: -9999px; }
+    </style>
+</head>
+<body>
+
+    <div id="page-login" class="container d-flex justify-content-center align-items-center vh-100">
+        <div class="card p-5 text-center" style="width: 400px;">
+            <div class="mb-4">
+                <img src="logo.png" alt="Logo" style="width: 100px; height: 100px; object-fit: contain;" onerror="this.src='https://via.placeholder.com/100?text=LOGO'">
+                <h4 class="mt-3 fw-bold">SMP IT Bustanul Maarif</h4>
+                <p class="text-muted">Sistem Informasi Honor Guru</p>
+            </div>
+            <div class="form-floating mb-3">
+                <input type="text" id="login-user" class="form-control" placeholder="Username">
+                <label>Username</label>
+            </div>
+            <div class="form-floating mb-4">
+                <input type="password" id="login-pass" class="form-control" placeholder="Password">
+                <label>Password</label>
+            </div>
+            <button onclick="doLogin()" class="btn btn-primary w-100 py-3 fw-bold shadow">MASUK APLIKASI</button>
+        </div>
+    </div>
+
+    <div id="page-admin" class="container-fluid hidden">
+        <div class="row">
+            <div class="col-md-2 sidebar p-3 d-flex flex-column">
+                <div class="text-center mb-4 mt-3 pb-3 border-bottom border-secondary">
+                    <div class="bg-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px;">
+                        <img src="logo.png" style="width: 60px; object-fit: contain;" onerror="this.src='https://via.placeholder.com/60?text=IMG'">
+                    </div>
+                    <h6 class="text-white fw-bold m-0">ADMINISTRATOR</h6>
+                    <small class="text-white-50">Panel Kelola Honor</small>
+                </div>
+                
+                <ul class="nav flex-column flex-grow-1 gap-1">
+                    <li class="nav-item"><a class="nav-link active" onclick="showSection('dashboard')"><i class="fas fa-chart-pie me-2"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" onclick="showSection('data-guru')"><i class="fas fa-chalkboard-teacher me-2"></i> Data Guru</a></li>
+                    <li class="nav-item"><a class="nav-link" onclick="showSection('input-honor')"><i class="fas fa-calculator me-2"></i> Input Honor</a></li>
+                    <li class="nav-item"><a class="nav-link" onclick="showSection('rekap-bulanan')"><i class="fas fa-file-invoice-dollar me-2"></i> Rekap Bulanan</a></li>
+                    <li class="nav-item"><a class="nav-link" onclick="showSection('rekap-tahunan')"><i class="fas fa-chart-line me-2"></i> Rekap Tahunan</a></li>
+                    <li class="nav-item mt-3"><a class="nav-link" onclick="showSection('pengaturan')"><i class="fas fa-cogs me-2"></i> Pengaturan</a></li>
+                </ul>
+                
+                <div class="mt-auto mb-4">
+                    <button class="btn btn-danger w-100 bg-gradient" onclick="doLogout()"><i class="fas fa-sign-out-alt me-2"></i> Keluar</button>
+                </div>
+            </div>
+
+            <div class="col-md-10 p-4" style="height: 100vh; overflow-y: auto;">
+                
+                <div id="sec-dashboard">
+                    <h3 class="mb-4 fw-bold text-dark">Dashboard Overview</h3>
+                    
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-4">
+                            <div class="card stat-card bg-gradient-primary h-100 p-4">
+                                <h6 class="text-uppercase text-white-50 fw-bold">Total Guru</h6>
+                                <h2 class="fw-bold display-5 mb-0" id="dash-total-guru">0</h2>
+                                <i class="fas fa-users icon-bg"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card stat-card bg-gradient-success h-100 p-4">
+                                <h6 class="text-uppercase text-white-50 fw-bold">Pengeluaran Bulan Ini</h6>
+                                <h2 class="fw-bold mb-0" id="dash-total-honor">Rp 0</h2>
+                                <i class="fas fa-wallet icon-bg"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card stat-card bg-gradient-info h-100 p-4 text-center">
+                                <h5 class="m-0 fw-bold" id="clock-time">00:00</h5>
+                                <small id="clock-date">Senin, 1 Jan 2024</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-md-8">
+                            <div class="card p-4 h-100">
+                                <h5 class="fw-bold mb-4 text-secondary"><i class="fas fa-chart-bar me-2"></i> Tren Pengeluaran (Tahun Ini)</h5>
+                                <canvas id="expenseChart" style="max-height: 300px;"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card p-4 h-100">
+                                <h5 class="fw-bold mb-4 text-secondary"><i class="fas fa-history me-2"></i> Aktivitas Terakhir</h5>
+                                <div id="last-activity-content" class="text-center py-4">
+                                    <div class="text-muted fst-italic">Belum ada data inputan.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="sec-data-guru" class="hidden">
+                    <h3 class="mb-4 fw-bold">Data Master Guru</h3>
+                    <div class="card p-4">
+                        <div class="row g-3 mb-4 border-bottom pb-4">
+                            <input type="hidden" id="guru-edit-id"> <div class="col-md-3">
+                                <label class="form-label small fw-bold text-muted">Nama Lengkap</label>
+                                <input type="text" id="guru-nama" class="form-control" placeholder="Nama Guru">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small fw-bold text-muted">Kelas</label>
+                                <input type="text" id="guru-kelas" class="form-control" placeholder="Cth: 7A">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small fw-bold text-muted">Mapel</label>
+                                <input type="text" id="guru-mapel" class="form-control" placeholder="Mapel">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small fw-bold text-muted">Jabatan</label>
+                                <input type="text" id="guru-jabatan" class="form-control" placeholder="Jabatan">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small fw-bold text-muted">Gaji Pokok</label>
+                                <input type="number" id="guru-gapok" class="form-control" placeholder="0">
+                            </div>
+                            <div class="col-md-1 d-flex align-items-end">
+                                <button type="button" onclick="simpanGuru()" id="btn-simpan-guru" class="btn btn-primary w-100"><i class="fas fa-save"></i></button>
+                                <button type="button" onclick="batalEditGuru()" id="btn-batal-guru" class="btn btn-secondary w-100 hidden"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light"><tr><th>Nama</th><th>Kelas</th><th>Mapel</th><th>Jabatan</th><th>Gaji Pokok</th><th>Aksi</th></tr></thead>
+                                <tbody id="tabel-guru"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="sec-input-honor" class="hidden">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="fw-bold">Input Honorarium</h3>
+                        <span class="badge bg-primary fs-6 shadow-sm" id="status-mode">Input Baru</span>
+                    </div>
+                    
+                    <div class="card p-4">
+                        <input type="hidden" id="edit-id-transaksi">
+                        
+                        <div class="row g-3 mb-4 bg-light p-3 rounded border">
+                            <div class="col-md-4"><label class="fw-bold small">Guru</label><select id="input-pilih-guru" class="form-select" onchange="resetFormHonor()"></select></div>
+                            <div class="col-md-2"><label class="fw-bold small">Bulan</label><select id="input-bulan" class="form-select" onchange="renderKalender()"></select></div>
+                            <div class="col-md-2"><label class="fw-bold small">Tahun</label><input type="number" id="input-tahun" class="form-control" value="2024" onchange="renderKalender()"></div>
+                            <div class="col-md-2"><label class="fw-bold small text-success">Honor/JP</label><input type="number" id="rate-jp" class="form-control border-success" value="30000" onkeyup="hitungTotal()"></div>
+                            <div class="col-md-2"><label class="fw-bold small text-primary">Trans/Hari</label><input type="number" id="rate-transport" class="form-control border-primary" value="20000" onkeyup="hitungTotal()"></div>
+                        </div>
+
+                        <h6 class="text-muted mb-3"><i class="fas fa-calendar-alt me-2"></i>Input JP (Isi angka di tanggal mengajar)</h6>
+                        <div class="row row-cols-6 row-cols-md-8 g-2 mb-4" id="grid-kalender"></div>
+
+                        <div class="row">
+                            <div class="col-md-5">
+                                <table class="table table-sm table-borderless">
+                                    <tr><td>Total JP <span class="badge bg-secondary" id="badge-total-jp">0</span></td><td class="text-end fw-bold" id="txt-honor-jp">0</td></tr>
+                                    <tr><td>Total Hadir <span class="badge bg-secondary" id="badge-total-hadir">0</span></td><td class="text-end fw-bold" id="txt-transport">0</td></tr>
+                                    <tr><td>Gapok</td><td class="text-end fw-bold" id="txt-gapok">0</td></tr>
+                                    <tr><td class="align-middle">Tunjangan Jabatan</td><td><input type="number" id="input-tunj-jabatan" class="form-control form-control-sm text-end" value="0" onkeyup="hitungTotal()"></td></tr>
+                                </table>
+                            </div>
+                            <div class="col-md-7 border-start ps-4">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="d-flex justify-content-between mb-2"><small class="fw-bold text-success">Kegiatan (+)</small><button class="btn btn-xs btn-outline-success py-0" onclick="tambahBarisItem('kegiatan')">+</button></div>
+                                        <div id="container-kegiatan"></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="d-flex justify-content-between mb-2"><small class="fw-bold text-danger">Potongan (-)</small><button class="btn btn-xs btn-outline-danger py-0" onclick="tambahBarisItem('potongan')">+</button></div>
+                                        <div id="container-potongan"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                            <div><h5 class="m-0 text-muted">Total Bersih:</h5><h2 class="m-0 fw-bold text-primary" id="txt-grand-total">Rp 0</h2></div>
+                            <div>
+                                <button onclick="batalkanEdit()" id="btn-batal" class="btn btn-light text-danger me-2 hidden">Batal</button>
+                                <button onclick="simpanHonor()" class="btn btn-lg btn-success shadow"><i class="fas fa-save me-2"></i> SIMPAN DATA</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="sec-rekap-bulanan" class="hidden">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="fw-bold">Rekapitulasi Bulanan</h3>
+                        <div>
+                            <button onclick="downloadZIPStruk()" class="btn btn-success me-2 shadow-sm"><i class="fas fa-file-archive me-2"></i> Download Semua (.ZIP)</button>
+                            <button onclick="downloadLaporanPDF()" class="btn btn-danger shadow-sm"><i class="fas fa-file-pdf me-2"></i> Laporan PDF</button>
+                        </div>
+                    </div>
+                    <div class="card p-3">
+                        <div class="row mb-3">
+                            <div class="col-md-3"><select id="filter-bulan" class="form-select" onchange="loadRekap()"></select></div>
+                            <div class="col-md-3"><input type="number" id="filter-tahun" class="form-control" value="2024" onchange="loadRekap()"></div>
+                        </div>
+                        <div id="area-laporan-sekolah">
+                            <div class="text-center mb-4 hidden" id="header-laporan">
+                                <h4 class="fw-bold">SMP IT BUSTANUL MAARIF</h4>
+                                <p>Laporan Pengeluaran Honorarium Guru</p>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped align-middle small">
+                                    <thead class="table-dark text-center">
+                                        <tr>
+                                            <th>Guru</th>
+                                            <th>Rincian Jam & Trans</th>
+                                            <th>Tunjangan</th>
+                                            <th>Potongan</th>
+                                            <th>Total Bersih</th>
+                                            <th class="hide-print" style="width: 150px;">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tabel-rekap"></tbody>
+                                    <tfoot>
+                                        <tr class="fw-bold table-active">
+                                            <td colspan="4" class="text-end">TOTAL PENGELUARAN</td>
+                                            <td id="rekap-total-all" class="text-end fs-6">Rp 0</td>
+                                            <td class="hide-print"></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="sec-rekap-tahunan" class="hidden">
+                    <h3>Rekap Tahunan</h3>
+                    <div class="card p-4">
+                        <div class="col-md-3 mb-3">
+                            <label class="fw-bold small">Pilih Tahun</label>
+                            <input type="number" id="filter-rekap-tahun" class="form-control" value="2024" onchange="loadRekapTahunan()">
+                        </div>
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-light"><tr><th>Bulan</th><th>Total Pengeluaran</th></tr></thead>
+                            <tbody id="tabel-rekap-tahunan"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="sec-pengaturan" class="hidden">
+                    <h3 class="mb-4 fw-bold">Pengaturan Sistem</h3>
+                    
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="card p-4 h-100 border-start border-4 border-info">
+                                <h5 class="fw-bold mb-3"><i class="fas fa-user-tie me-2"></i> Pejabat Sekolah (Untuk Struk)</h5>
+                                <div class="mb-3">
+                                    <label class="small fw-bold">Nama Kepala Sekolah</label>
+                                    <input type="text" id="set-kepsek" class="form-control" placeholder="Nama Kepsek">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="small fw-bold">Nama Bendahara</label>
+                                    <input type="text" id="set-bendahara" class="form-control" placeholder="Nama Bendahara">
+                                </div>
+                                <button onclick="simpanPejabat()" class="btn btn-info text-white w-100 mt-auto">Simpan Nama</button>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card p-4 h-100 border-start border-4 border-warning">
+                                <h5 class="fw-bold mb-3"><i class="fas fa-key me-2"></i> Ganti Password</h5>
+                                <div class="row g-2">
+                                    <div class="col-6"><input type="text" id="set-new-user" class="form-control" placeholder="New User"></div>
+                                    <div class="col-6"><input type="password" id="set-new-pass" class="form-control" placeholder="New Pass"></div>
+                                </div>
+                                <button onclick="gantiPassword()" class="btn btn-warning w-100 mt-3">Update Login</button>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="card p-4 bg-light">
+                                <h5 class="fw-bold mb-3"><i class="fas fa-database me-2"></i> Backup & Restore Data</h5>
+                                <div class="d-flex gap-3">
+                                    <button onclick="backupData()" class="btn btn-outline-success"><i class="fas fa-download me-2"></i> Download Backup (.json)</button>
+                                    <div class="input-group" style="width: 400px;">
+                                        <input type="file" id="file-restore" class="form-control" accept=".json">
+                                        <button onclick="restoreData()" class="btn btn-outline-danger">Restore</button>
+                                    </div>
+                                </div>
+                                <small class="text-muted mt-2 d-block">*Lakukan backup rutin agar data aman jika browser di-reset.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="nota-preview-container">
+        <div class="text-center">
+            <div id="nota-box" class="nota-box bg-white text-start"></div>
+            <div class="mt-3">
+                <button class="btn btn-success fw-bold px-4 shadow" onclick="downloadNotaImage()"><i class="fas fa-download me-2"></i> SIMPAN (PNG)</button>
+                <button class="btn btn-secondary px-4 ms-2" onclick="tutupNota()">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="hidden-render-area"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <script>
+        // --- CONFIG ---
+        const bulanNama = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+        let currentNotaFilename = "Slip.png";
+        let expenseChart = null;
+
+        // --- INIT ---
+        window.onload = function() {
+            initClock();
+            initOptions();
+            loadPejabatToForm();
+        }
+
+        function initClock() {
+            setInterval(() => {
+                const now = new Date();
+                document.getElementById('clock-date').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+                document.getElementById('clock-time').innerText = now.toLocaleTimeString('id-ID', { hour12: false, hour: '2-digit', minute:'2-digit' });
+            }, 1000);
+        }
+        function initOptions() {
+            ['input-bulan', 'filter-bulan'].forEach(id => {
+                const el = document.getElementById(id);
+                bulanNama.forEach((nama, index) => {
+                    let opt = document.createElement('option'); opt.value = index; opt.innerText = nama;
+                    if(index === new Date().getMonth()) opt.selected = true;
+                    el.appendChild(opt);
+                });
+            });
+        }
+
+        // --- AUTH ---
+        function getCreds() { return JSON.parse(localStorage.getItem('app_config')) || {user:'admin', pass:'123'}; }
+        function doLogin() {
+            let c = getCreds();
+            if(document.getElementById('login-user').value === c.user && document.getElementById('login-pass').value === c.pass) {
+                document.getElementById('page-login').classList.add('hidden');
+                document.getElementById('page-admin').classList.remove('hidden');
+                showSection('dashboard');
+            } else Swal.fire({icon: 'error', title: 'Login Gagal', text: 'Username/Password salah', toast:true, position:'top-end', showConfirmButton:false, timer:3000});
+        }
+        function doLogout() { 
+            Swal.fire({title:'Keluar?', showCancelButton:true, confirmButtonText:'Ya', cancelButtonText:'Batal'}).then((res)=>{ if(res.isConfirmed) location.reload(); });
+        }
+        function gantiPassword() {
+            let u = document.getElementById('set-new-user').value, p = document.getElementById('set-new-pass').value;
+            if(u && p) {
+                let c = getCreds(); c.user=u; c.pass=p; localStorage.setItem('app_config', JSON.stringify(c));
+                Swal.fire('Sukses', 'Login berhasil diperbarui', 'success');
+            }
+        }
+        function simpanPejabat() {
+            let ks = document.getElementById('set-kepsek').value;
+            let bd = document.getElementById('set-bendahara').value;
+            let c = getCreds(); c.kepsek = ks; c.bendahara = bd;
+            localStorage.setItem('app_config', JSON.stringify(c));
+            Swal.fire('Tersimpan', 'Nama Pejabat diupdate', 'success');
+        }
+        function loadPejabatToForm() {
+            let c = getCreds();
+            if(c.kepsek) document.getElementById('set-kepsek').value = c.kepsek;
+            if(c.bendahara) document.getElementById('set-bendahara').value = c.bendahara;
+        }
+
+        // --- NAVIGATION ---
+        function showSection(id) {
+            document.querySelectorAll('[id^="sec-"]').forEach(el => el.classList.add('hidden'));
+            document.getElementById('sec-' + id).classList.remove('hidden');
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+            if(event) event.target.closest('.nav-link').classList.add('active'); 
+            
+            if(id === 'data-guru') renderTabelGuru();
+            if(id === 'input-honor') { loadPilihanGuru(); if(!document.getElementById('edit-id-transaksi').value) resetFormHonor(); }
+            if(id === 'rekap-bulanan') loadRekap();
+            if(id === 'dashboard') updateDashboard();
+        }
+
+        // --- GURU MANAGEMENT (WITH EDIT) ---
+        function getGuru() { return JSON.parse(localStorage.getItem('db_guru')) || []; }
+        function simpanGuru() {
+            let id = document.getElementById('guru-edit-id').value;
+            let nama = document.getElementById('guru-nama').value;
+            let kelas = document.getElementById('guru-kelas').value;
+            let mapel = document.getElementById('guru-mapel').value;
+            let jabatan = document.getElementById('guru-jabatan').value;
+            let gapok = document.getElementById('guru-gapok').value;
+            
+            if(!nama) return Swal.fire('Gagal', 'Nama wajib diisi', 'warning');
+
+            let db = getGuru();
+            if(id) {
+                // Edit Mode
+                let idx = db.findIndex(g => g.id == id);
+                if(idx !== -1) {
+                    db[idx] = { id: parseInt(id), nama, kelas, mapel, jabatan, gapok: parseInt(gapok)||0 };
+                }
+            } else {
+                // Create Mode
+                db.push({ id: Date.now(), nama, kelas, mapel, jabatan, gapok: parseInt(gapok)||0 });
+            }
+            localStorage.setItem('db_guru', JSON.stringify(db));
+            Swal.fire({icon:'success', title:'Berhasil', text:'Data Guru Tersimpan', timer:1500, showConfirmButton:false});
+            batalEditGuru();
+            renderTabelGuru();
+        }
+        
+        function renderTabelGuru() {
+            let html = '';
+            getGuru().forEach((g) => {
+                html += `<tr><td><strong>${g.nama}</strong></td><td>${g.kelas||'-'}</td><td>${g.mapel}</td><td>${g.jabatan}</td>
+                <td>Rp ${g.gapok.toLocaleString()}</td>
+                <td>
+                    <button class="btn btn-sm btn-warning me-1" onclick="editGuru(${g.id})"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-sm btn-danger" onclick="hapusGuru(${g.id})"><i class="fas fa-trash"></i></button>
+                </td></tr>`;
+            });
+            document.getElementById('tabel-guru').innerHTML = html;
+        }
+        
+        function editGuru(id) {
+            let g = getGuru().find(x => x.id == id);
+            if(g) {
+                document.getElementById('guru-edit-id').value = g.id;
+                document.getElementById('guru-nama').value = g.nama;
+                document.getElementById('guru-kelas').value = g.kelas;
+                document.getElementById('guru-mapel').value = g.mapel;
+                document.getElementById('guru-jabatan').value = g.jabatan;
+                document.getElementById('guru-gapok').value = g.gapok;
+                
+                // Change Buttons
+                document.getElementById('btn-simpan-guru').innerHTML = '<i class="fas fa-check me-1"></i> Update';
+                document.getElementById('btn-simpan-guru').classList.remove('btn-primary');
+                document.getElementById('btn-simpan-guru').classList.add('btn-success');
+                document.getElementById('btn-batal-guru').classList.remove('hidden');
+                
+                // Scroll to top
+                document.querySelector('.card').scrollIntoView({behavior: 'smooth'});
+            }
+        }
+        
+        function batalEditGuru() {
+            document.getElementById('guru-edit-id').value = '';
+            document.getElementById('guru-nama').value = '';
+            document.getElementById('guru-kelas').value = '';
+            document.getElementById('guru-mapel').value = '';
+            document.getElementById('guru-jabatan').value = '';
+            document.getElementById('guru-gapok').value = '';
+            
+            document.getElementById('btn-simpan-guru').innerHTML = '<i class="fas fa-save"></i>';
+            document.getElementById('btn-simpan-guru').classList.add('btn-primary');
+            document.getElementById('btn-simpan-guru').classList.remove('btn-success');
+            document.getElementById('btn-batal-guru').classList.add('hidden');
+        }
+
+        function hapusGuru(id) {
+            Swal.fire({title:'Hapus Guru?', text:"Data tidak bisa kembali", icon:'warning', showCancelButton:true, confirmButtonColor:'#d33', confirmButtonText:'Hapus'}).then((result) => {
+                if (result.isConfirmed) {
+                    let db = getGuru().filter(x => x.id !== id);
+                    localStorage.setItem('db_guru', JSON.stringify(db));
+                    renderTabelGuru();
+                    Swal.fire('Terhapus!', 'Data guru dihapus.', 'success');
+                }
+            });
+        }
+
+        // --- HONOR SYSTEM ---
+        function loadPilihanGuru() {
+            let sel = document.getElementById('input-pilih-guru');
+            let val = sel.value; sel.innerHTML = '<option value="">-- Pilih Guru --</option>';
+            getGuru().forEach(g => {
+                let opt = document.createElement('option'); opt.value = g.id; opt.innerText = `${g.nama} (${g.kelas||''} - ${g.mapel})`;
+                sel.appendChild(opt);
+            });
+            sel.value = val;
+        }
+        function renderKalender() {
+            let container = document.getElementById('grid-kalender'); container.innerHTML = '';
+            let days = new Date(document.getElementById('input-tahun').value, parseInt(document.getElementById('input-bulan').value)+1, 0).getDate();
+            for(let i=1; i<=days; i++) {
+                container.innerHTML += `<div class="col"><div class="date-box bg-white border rounded"><span class="d-block text-muted py-1" style="font-size:10px">${i}</span>
+                <input type="number" class="date-input form-control-sm p-0 w-100 border-0" min="0" oninput="cekHadir(this)" data-tgl="${i}"></div></div>`;
+            }
+            hitungTotal();
+        }
+        function cekHadir(el) { 
+            let box = el.parentElement;
+            if(el.value > 0) { box.classList.add('bg-success', 'bg-opacity-25', 'border-success'); el.classList.add('text-success'); } 
+            else { box.classList.remove('bg-success', 'bg-opacity-25', 'border-success'); el.classList.remove('text-success'); }
+            hitungTotal(); 
+        }
+        function tambahBarisItem(type) {
+            let container = document.getElementById(`container-${type}`);
+            let div = document.createElement('div'); div.className = `input-group mb-1 item-${type}`;
+            div.innerHTML = `<input type="text" class="form-control form-control-sm" placeholder="Ket..."><input type="number" class="form-control form-control-sm nominal-${type}" placeholder="Rp" onkeyup="hitungTotal()"><button class="btn btn-outline-secondary btn-sm" onclick="this.parentElement.remove(); hitungTotal()">x</button>`;
+            container.appendChild(div);
+        }
+        function hitungTotal() {
+            let totalJP=0, totalHadir=0;
+            document.querySelectorAll('.date-input').forEach(i => { let v=parseInt(i.value)||0; totalJP+=v; if(v>0) totalHadir++; });
+            
+            let rateJP = parseInt(document.getElementById('rate-jp').value)||0;
+            let rateTrans = parseInt(document.getElementById('rate-transport').value)||0;
+            let tunj = parseInt(document.getElementById('input-tunj-jabatan').value)||0;
+            let idGuru = document.getElementById('input-pilih-guru').value;
+            let g = getGuru().find(x=>x.id==idGuru);
+            let gapok = g ? parseInt(g.gapok) : 0;
+            
+            let k=0; document.querySelectorAll('.nominal-kegiatan').forEach(x=>k+=(parseInt(x.value)||0));
+            let p=0; document.querySelectorAll('.nominal-potongan').forEach(x=>p+=(parseInt(x.value)||0));
+            
+            let total = (totalJP*rateJP) + (totalHadir*rateTrans) + gapok + tunj + k - p;
+            
+            document.getElementById('badge-total-jp').innerText = totalJP;
+            document.getElementById('badge-total-hadir').innerText = totalHadir;
+            document.getElementById('txt-honor-jp').innerText = (totalJP*rateJP).toLocaleString();
+            document.getElementById('txt-transport').innerText = (totalHadir*rateTrans).toLocaleString();
+            document.getElementById('txt-gapok').innerText = gapok.toLocaleString();
+            document.getElementById('txt-grand-total').innerText = "Rp " + total.toLocaleString();
+            
+            return { totalJP, totalHadir, uangJP: totalJP*rateJP, uangTrans: totalHadir*rateTrans, gapok, tunj, k, p, total, g, rateJP, rateTrans };
+        }
+        function simpanHonor() {
+            let c = hitungTotal();
+            if(!c.g) return Swal.fire('Error', 'Pilih guru dulu', 'error');
+            
+            let bln = document.getElementById('input-bulan').value, thn = document.getElementById('input-tahun').value;
+            let editId = document.getElementById('edit-id-transaksi').value;
+            let harian = {}; document.querySelectorAll('.date-input').forEach(i=>{if(i.value>0) harian[i.dataset.tgl]=parseInt(i.value)});
+            let keg = []; document.querySelectorAll('.item-kegiatan').forEach(e=>keg.push({ket:e.children[0].value, nom:e.children[1].value}));
+            let pot = []; document.querySelectorAll('.item-potongan').forEach(e=>pot.push({ket:e.children[0].value, nom:e.children[1].value}));
+            
+            let trx = {
+                id: editId ? parseInt(editId) : Date.now(), bulan: bln, tahun: thn,
+                id_guru: c.g.id, nama_guru: c.g.nama, kelas_guru: c.g.kelas, jabatan: c.g.jabatan,
+                rate_jp: c.rateJP, rate_transport: c.rateTrans, total_jp: c.totalJP, total_hadir: c.totalHadir,
+                uang_jp: c.uangJP, uang_transport: c.uangTrans, gapok: c.gapok, tunj_jabatan: c.tunj,
+                kegiatan: keg, potongan: pot, total_terima: c.total, detail_harian: harian, timestamp: Date.now()
+            };
+            
+            let db = JSON.parse(localStorage.getItem('db_honor'))||[];
+            if(editId) { let idx = db.findIndex(x=>x.id==editId); if(idx!==-1) db[idx]=trx; batalkanEdit(); }
+            else {
+                let exist = db.findIndex(x=>x.id_guru==c.g.id && x.bulan==bln && x.tahun==thn);
+                if(exist!==-1) {
+                    if(!confirm('Data bulan ini sudah ada. Timpa?')) return;
+                    db.splice(exist,1);
+                }
+                db.push(trx);
+            }
+            localStorage.setItem('db_honor', JSON.stringify(db));
+            Swal.fire({icon:'success', title:'Tersimpan!', text:'Data honor berhasil disimpan', showConfirmButton:false, timer:1500});
+            showSection('rekap-bulanan');
+        }
+        function resetFormHonor() {
+            document.getElementById('edit-id-transaksi').value = "";
+            document.getElementById('status-mode').innerText = "Input Baru";
+            document.getElementById('status-mode').classList.replace('bg-warning','bg-primary');
+            document.getElementById('btn-batal').classList.add('hidden');
+            document.getElementById('input-pilih-guru').disabled = false;
+            document.getElementById('container-kegiatan').innerHTML = '';
+            document.getElementById('container-potongan').innerHTML = '';
+            document.getElementById('input-tunj-jabatan').value = 0;
+            renderKalender();
+        }
+        function editData(id) {
+            let item = (JSON.parse(localStorage.getItem('db_honor'))||[]).find(x=>x.id==id); if(!item) return;
+            showSection('input-honor');
+            document.getElementById('edit-id-transaksi').value = item.id;
+            document.getElementById('status-mode').innerText = "Edit Data";
+            document.getElementById('status-mode').classList.replace('bg-primary','bg-warning');
+            document.getElementById('btn-batal').classList.remove('hidden');
+            document.getElementById('input-bulan').value = item.bulan;
+            document.getElementById('input-tahun').value = item.tahun;
+            loadPilihanGuru();
+            document.getElementById('input-pilih-guru').value = item.id_guru;
+            document.getElementById('input-pilih-guru').disabled = true;
+            document.getElementById('rate-jp').value = item.rate_jp;
+            document.getElementById('rate-transport').value = item.rate_transport;
+            document.getElementById('input-tunj-jabatan').value = item.tunj_jabatan;
+            
+            renderKalender();
+            if(item.detail_harian) for(const[t,v] of Object.entries(item.detail_harian)) {
+                let i = document.querySelector(`.date-input[data-tgl="${t}"]`); if(i){i.value=v; cekHadir(i);}
+            }
+            document.getElementById('container-kegiatan').innerHTML = '';
+            item.kegiatan.forEach(k=>{tambahBarisItem('kegiatan'); let el=document.querySelector('#container-kegiatan').lastElementChild; el.children[0].value=k.ket; el.children[1].value=k.nom;});
+            document.getElementById('container-potongan').innerHTML = '';
+            item.potongan?.forEach(k=>{tambahBarisItem('potongan'); let el=document.querySelector('#container-potongan').lastElementChild; el.children[0].value=k.ket; el.children[1].value=k.nom;});
+            hitungTotal();
+        }
+        function batalkanEdit() { resetFormHonor(); }
+        
+        // --- DASHBOARD & STATS ---
+        function updateDashboard() {
+            let db = JSON.parse(localStorage.getItem('db_honor'))||[];
+            let guru = getGuru();
+            document.getElementById('dash-total-guru').innerText = guru.length;
+            
+            let now = new Date();
+            let monthTotal = db.filter(x => x.bulan == now.getMonth() && x.tahun == now.getFullYear()).reduce((a,b) => a+b.total_terima, 0);
+            document.getElementById('dash-total-honor').innerText = "Rp " + monthTotal.toLocaleString();
+            
+            // Last Activity Widget
+            let last = db.sort((a,b) => b.timestamp - a.timestamp)[0];
+            let actHtml = `<div class="text-muted fst-italic">Belum ada data.</div>`;
+            if(last) {
+                actHtml = `
+                    <div class="activity-card bg-light p-3 rounded text-start shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-primary">Baru Saja</span>
+                            <small class="text-muted">${new Date(last.timestamp || Date.now()).toLocaleTimeString()}</small>
+                        </div>
+                        <h5 class="fw-bold text-dark m-0">${last.nama_guru}</h5>
+                        <p class="text-muted small mb-2">${last.kelas_guru || '-'} | ${last.jabatan}</p>
+                        <h4 class="text-success fw-bold">Rp ${last.total_terima.toLocaleString()}</h4>
+                        <div class="d-grid gap-2 mt-2">
+                            <button class="btn btn-sm btn-outline-primary" onclick="tampilNota(${last.id})">Lihat Struk</button>
+                        </div>
+                    </div>
+                `;
+            }
+            document.getElementById('last-activity-content').innerHTML = actHtml;
+            
+            // Update Chart
+            updateChart(db);
+        }
+        
+        function updateChart(db) {
+            let ctx = document.getElementById('expenseChart').getContext('2d');
+            let currentYear = new Date().getFullYear();
+            let monthlyData = Array(12).fill(0);
+            
+            db.forEach(x => { if(x.tahun == currentYear) monthlyData[x.bulan] += x.total_terima; });
+            
+            if(expenseChart) expenseChart.destroy();
+            
+            expenseChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: bulanNama.map(m => m.substring(0,3)),
+                    datasets: [{
+                        label: `Pengeluaran ${currentYear}`,
+                        data: monthlyData,
+                        backgroundColor: 'rgba(78, 115, 223, 0.7)',
+                        borderColor: 'rgba(78, 115, 223, 1)',
+                        borderWidth: 1,
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        // --- REKAP & DOWNLOADS ---
+        function loadRekap() {
+            let bln = document.getElementById('filter-bulan').value, thn = document.getElementById('filter-tahun').value;
+            let html = '', total=0;
+            (JSON.parse(localStorage.getItem('db_honor'))||[]).filter(x=>x.bulan==bln && x.tahun==thn).forEach(item => {
+                total += item.total_terima;
+                let kStr = item.kegiatan.map(k=>`<div class="text-success small">+ ${k.ket}: ${parseInt(k.nom).toLocaleString()}</div>`).join('');
+                let pStr = (item.potongan||[]).map(k=>`<div class="text-danger small">- ${k.ket}: ${parseInt(k.nom).toLocaleString()}</div>`).join('');
+                html += `<tr>
+                    <td><strong>${item.nama_guru}</strong><br><small class="text-muted">${item.kelas_guru} | ${item.jabatan}</small></td>
+                    <td><small>${item.total_jp} JP x ${item.rate_jp/1000}k = ${item.uang_jp.toLocaleString()}</small><br><small>${item.total_hadir} H x ${item.rate_transport/1000}k = ${item.uang_transport.toLocaleString()}</small></td>
+                    <td><small>Gapok: ${item.gapok.toLocaleString()}</small><br><small>Jbt: ${item.tunj_jabatan.toLocaleString()}</small>${kStr}</td>
+                    <td>${pStr||'-'}</td>
+                    <td class="fw-bold text-primary">Rp ${item.total_terima.toLocaleString()}</td>
+                    <td class="hide-print text-center">
+                        <button class="btn btn-sm btn-info text-white mb-1 w-100" onclick="tampilNota(${item.id})">Nota</button>
+                        <button class="btn btn-sm btn-warning mb-1 w-100" onclick="editData(${item.id})">Edit</button>
+                        <button class="btn btn-sm btn-danger w-100" onclick="hapusHonor(${item.id})">Hapus</button>
+                    </td>
+                </tr>`;
+            });
+            document.getElementById('tabel-rekap').innerHTML = html;
+            document.getElementById('rekap-total-all').innerText = "Rp " + total.toLocaleString();
+        }
+        
+        function loadRekapTahunan() {
+            let thn = document.getElementById('filter-rekap-tahun').value;
+            let rekap = Array(12).fill(0), html='', total=0;
+            (JSON.parse(localStorage.getItem('db_honor'))||[]).forEach(i=>{ if(i.tahun==thn) rekap[i.bulan]+=i.total_terima; });
+            rekap.forEach((t,i)=>{ if(t>0){ html+=`<tr><td>${bulanNama[i]}</td><td class="text-end">Rp ${t.toLocaleString()}</td></tr>`; total+=t; }});
+            document.getElementById('tabel-rekap-tahunan').innerHTML = html + `<tr class="table-dark fw-bold"><td>TOTAL</td><td class="text-end">Rp ${total.toLocaleString()}</td></tr>`;
+        }
+
+        function hapusHonor(id) {
+            Swal.fire({title:'Yakin Hapus?', text:"Data transaksi akan hilang", icon:'warning', showCancelButton:true, confirmButtonColor:'#d33'}).then((r)=>{
+                if(r.isConfirmed) {
+                    let db = JSON.parse(localStorage.getItem('db_honor'))||[];
+                    localStorage.setItem('db_honor', JSON.stringify(db.filter(x=>x.id!==id)));
+                    loadRekap(); Swal.fire('Terhapus','','success');
+                }
+            });
+        }
+
+        function generateNotaHTML(item) {
+            let c = getCreds();
+            let ks = c.kepsek || "( ....................... )";
+            let bd = c.bendahara || "( ....................... )";
+            
+            let kegHTML = item.kegiatan.map(k=>`<div class="d-flex justify-content-between"><span>+ ${k.ket}</span><span>${parseInt(k.nom).toLocaleString()}</span></div>`).join('');
+            let potHTML = (item.potongan||[]).map(k=>`<div class="d-flex justify-content-between text-danger"><span>- ${k.ket}</span><span>(${parseInt(k.nom).toLocaleString()})</span></div>`).join('');
+
+            return `
+                <div class="nota-box bg-white" style="width:320px; padding:25px;">
+                    <div class="text-center border-bottom border-dark pb-3 mb-3">
+                        <img src="logo.png" style="width: 50px; margin-bottom: 10px;" onerror="this.style.display='none'"><br>
+                        <strong class="h6">SMP IT BUSTANUL MAARIF</strong><br>
+                        <small>SLIP HONORARIUM GURU</small><br>
+                        <small>${bulanNama[item.bulan]} ${item.tahun}</small>
+                    </div>
+                    <div class="border-bottom pb-2 mb-2">
+                        <strong>${item.nama_guru}</strong><br>
+                        <small class="text-muted">${item.kelas_guru||'-'} | ${item.jabatan}</small>
+                    </div>
+                    <div class="d-flex justify-content-between"><span>Gaji Pokok</span><span>${item.gapok.toLocaleString()}</span></div>
+                    <div class="d-flex justify-content-between"><span>Tunj. Jabatan</span><span>${item.tunj_jabatan.toLocaleString()}</span></div>
+                    <div class="d-flex justify-content-between"><span>Honor JP (${item.total_jp})</span><span>${item.uang_jp.toLocaleString()}</span></div>
+                    <div class="d-flex justify-content-between"><span>Transport (${item.total_hadir})</span><span>${item.uang_transport.toLocaleString()}</span></div>
+                    <div class="my-1 border-top border-light"></div>
+                    ${kegHTML} ${potHTML}
+                    <div class="d-flex justify-content-between fw-bold border-top border-dark pt-2 mt-2" style="font-size:14px;">
+                        <span>TOTAL TERIMA</span><span>Rp ${item.total_terima.toLocaleString()}</span>
+                    </div>
+                    <div class="row mt-4 text-center" style="font-size:10px;">
+                        <div class="col-6"><br>Kepala Sekolah<br><br><br><u>${ks}</u></div>
+                        <div class="col-6"><br>Bendahara<br><br><br><u>${bd}</u></div>
+                    </div>
+                </div>`;
+        }
+
+        // --- SINGLE DOWNLOAD (PNG) ---
+        function tampilNota(id) {
+            let item = (JSON.parse(localStorage.getItem('db_honor'))||[]).find(x=>x.id==id); if(!item) return;
+            currentNotaFilename = `Slip_${item.nama_guru.replace(/[^a-z0-9]/gi,'_')}.png`;
+            document.getElementById('nota-box').innerHTML = generateNotaHTML(item);
+            document.getElementById('nota-preview-container').style.display = 'flex';
+        }
+        function tutupNota() { document.getElementById('nota-preview-container').style.display = 'none'; }
+        function downloadNotaImage() {
+            html2canvas(document.getElementById('nota-box'), {scale:2, backgroundColor:"#ffffff"}).then(canvas => {
+                let link = document.createElement('a'); link.download = currentNotaFilename; link.href = canvas.toDataURL("image/png"); link.click();
+            });
+        }
+
+        // --- BATCH DOWNLOAD (ZIP) ---
+        async function downloadZIPStruk() {
+            let bln = document.getElementById('filter-bulan').value, thn = document.getElementById('filter-tahun').value;
+            let db = (JSON.parse(localStorage.getItem('db_honor'))||[]).filter(x => x.bulan == bln && x.tahun == thn);
+            
+            if(db.length === 0) return Swal.fire('Kosong', 'Tidak ada data bulan ini', 'info');
+            
+            Swal.fire({title: 'Memproses ZIP...', html: 'Mohon tunggu...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+            
+            let zip = new JSZip(), hiddenDiv = document.getElementById('hidden-render-area');
+            
+            for (let item of db) {
+                hiddenDiv.innerHTML = generateNotaHTML(item);
+                let element = hiddenDiv.querySelector('.nota-box');
+                try {
+                    let canvas = await html2canvas(element, { scale: 2, backgroundColor: "#ffffff" });
+                    let blob = await new Promise(resolve => canvas.toBlob(resolve));
+                    zip.file(`Struk_${item.nama_guru.replace(/[^a-z0-9]/gi,'_')}.png`, blob);
+                } catch(e){}
+            }
+            hiddenDiv.innerHTML = '';
+            
+            zip.generateAsync({type:"blob"}).then(function(content) {
+                Swal.close();
+                saveAs(content, `Struk_Honor_${bulanNama[bln]}_${thn}.zip`);
+                Swal.fire('Selesai', 'File ZIP berhasil didownload', 'success');
+            });
+        }
+        
+        function downloadLaporanPDF() {
+            Swal.fire({title: 'Memproses PDF...', didOpen: () => Swal.showLoading()});
+            document.getElementById('header-laporan').classList.remove('hidden');
+            let style = document.createElement('style'); style.innerHTML = `.hide-print { display: none; }`; document.head.appendChild(style);
+            html2pdf().set({margin:0.3, filename:'Rekap_Honor.pdf', image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2}, jsPDF:{unit:'in',format:'letter',orientation:'landscape'}}).from(document.getElementById('area-laporan-sekolah')).save().then(()=>{
+                document.getElementById('header-laporan').classList.add('hidden'); style.remove(); Swal.close();
+            });
+        }
+
+        function backupData() {
+            let data = { guru: getGuru(), honor: JSON.parse(localStorage.getItem('db_honor'))||[], config: getCreds() };
+            let blob = new Blob([JSON.stringify(data)], {type: "application/json"});
+            saveAs(blob, "Backup_Honor_SMPIT_" + new Date().toISOString().slice(0,10) + ".json");
+        }
+        function restoreData() {
+            let file = document.getElementById('file-restore').files[0];
+            if(!file) return Swal.fire('Error','Pilih file dulu','error');
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let d = JSON.parse(e.target.result);
+                    if(d.guru && d.honor) {
+                        localStorage.setItem('db_guru', JSON.stringify(d.guru));
+                        localStorage.setItem('db_honor', JSON.stringify(d.honor));
+                        if(d.config) localStorage.setItem('app_config', JSON.stringify(d.config));
+                        Swal.fire('Berhasil','Data dipulihkan','success').then(()=>location.reload());
+                    } else throw new Error();
+                } catch(err) { Swal.fire('Error','File rusak','error'); }
+            };
+            reader.readAsText(file);
+        }
+    </script>
+</body>
+</html>
